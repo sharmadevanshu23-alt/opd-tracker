@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book Consultation — Dr. Sanjay Kapoor</title>
+<meta name="description" content="Book a consultation with Dr. Sanjay Kapoor, Senior Orthopaedic Surgeon, KK Hospital Gurugram.">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --gold:#c9a84c;
+  --gold2:#f5e0a0;
+  --navy:#0d1b2a;
+  --navy2:#1a2e45;
+  --blue:#1a56db;
+  --green:#0e9f6e;
+  --red:#e02424;
+  --text:#f9fafb;
+  --text2:#9ca3af;
+  --card:#1e3a5f;
+  --font:'Nunito',sans-serif;
+}
+html{scroll-behavior:smooth;}
+body{
+  font-family:var(--font);
+  background:linear-gradient(160deg,#0a1628 0%,#0d1b2a 50%,#0a1e35 100%);
+  color:var(--text);
+  min-height:100vh;
+}
+
+/* ── Top bar ── */
+.topbar{
+  background:rgba(13,27,42,0.95);
+  border-bottom:2px solid var(--gold);
+  padding:16px 20px;
+  text-align:center;
+  position:sticky;top:0;z-index:100;
+  backdrop-filter:blur(10px);
+}
+.topbar-name{
+  font-size:18px;font-weight:800;color:var(--gold);
+  letter-spacing:0.01em;
+}
+.topbar-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+
+/* ── Progress bar ── */
+.progress-wrap{
+  padding:16px 20px 0;
+  max-width:500px;margin:0 auto;
+}
+.progress-label{
+  display:flex;justify-content:space-between;
+  font-size:12px;color:var(--text2);margin-bottom:8px;
+}
+.progress-bar{
+  height:6px;background:rgba(255,255,255,0.1);
+  border-radius:10px;overflow:hidden;
+}
+.progress-fill{
+  height:100%;
+  background:linear-gradient(90deg,var(--gold),var(--gold2));
+  border-radius:10px;
+  transition:width 0.4s ease;
+  width:0%;
+}
+.step-dots{
+  display:flex;justify-content:center;gap:8px;margin-top:10px;
+}
+.step-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:rgba(255,255,255,0.15);
+  transition:all 0.3s;
+}
+.step-dot.active{background:var(--gold);transform:scale(1.3);}
+.step-dot.done{background:var(--green);}
+
+/* ── Steps ── */
+.steps-wrap{max-width:500px;margin:0 auto;padding:20px 16px 40px;}
+.step{display:none;}
+.step.active{display:block;animation:slideIn 0.35s ease both;}
+@keyframes slideIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+
+.step-header{margin-bottom:24px;}
+.step-num{
+  font-size:11px;font-weight:700;color:var(--gold);
+  text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;
+}
+.step-title{
+  font-size:24px;font-weight:800;color:var(--text);
+  line-height:1.2;
+}
+.step-title span{color:var(--gold);}
+.step-sub{font-size:14px;color:var(--text2);margin-top:6px;line-height:1.6;}
+
+/* ── Option cards (big tap targets) ── */
+.option-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;}
+.option-grid.single{grid-template-columns:1fr;}
+.option-grid.three{grid-template-columns:1fr 1fr 1fr;}
+.option-card{
+  padding:16px 12px;
+  border:2px solid rgba(255,255,255,0.1);
+  border-radius:14px;
+  background:rgba(255,255,255,0.04);
+  cursor:pointer;
+  text-align:center;
+  transition:all 0.18s;
+  position:relative;
+}
+.option-card:hover{border-color:rgba(201,168,76,0.4);background:rgba(201,168,76,0.06);}
+.option-card.selected{
+  border-color:var(--gold);
+  background:rgba(201,168,76,0.12);
+}
+.option-card.selected::after{
+  content:'✓';
+  position:absolute;top:6px;right:8px;
+  font-size:12px;color:var(--gold);font-weight:800;
+}
+.option-icon{font-size:28px;margin-bottom:6px;}
+.option-label{font-size:13px;font-weight:700;color:var(--text);line-height:1.3;}
+.option-sub{font-size:11px;color:var(--text2);margin-top:2px;}
+
+/* ── Pain scale ── */
+.pain-row{display:flex;gap:6px;flex-wrap:nowrap;}
+.pain-btn{
+  flex:1;padding:12px 4px;border-radius:10px;
+  border:2px solid rgba(255,255,255,0.1);
+  background:rgba(255,255,255,0.04);
+  color:var(--text2);cursor:pointer;
+  font-size:14px;font-weight:700;font-family:var(--font);
+  transition:all 0.15s;text-align:center;min-width:0;
+}
+.pain-btn.p1,.pain-btn.p2,.pain-btn.p3{border-color:rgba(14,159,110,0.3);}
+.pain-btn.p4,.pain-btn.p5,.pain-btn.p6{border-color:rgba(245,158,11,0.3);}
+.pain-btn.p7,.pain-btn.p8,.pain-btn.p9,.pain-btn.p10{border-color:rgba(224,36,36,0.3);}
+.pain-btn.selected.p1,.pain-btn.selected.p2,.pain-btn.selected.p3{background:rgba(14,159,110,0.2);border-color:var(--green);color:var(--green);}
+.pain-btn.selected.p4,.pain-btn.selected.p5,.pain-btn.selected.p6{background:rgba(245,158,11,0.2);border-color:#f59e0b;color:#f59e0b;}
+.pain-btn.selected.p7,.pain-btn.selected.p8,.pain-btn.selected.p9,.pain-btn.selected.p10{background:rgba(224,36,36,0.2);border-color:var(--red);color:var(--red);}
+.pain-label{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-top:6px;padding:0 2px;}
+
+/* ── Text inputs ── */
+.big-input{
+  width:100%;padding:16px;
+  border:2px solid rgba(255,255,255,0.1);
+  border-radius:14px;
+  background:rgba(255,255,255,0.05);
+  color:var(--text);font-family:var(--font);font-size:16px;
+  outline:none;transition:all 0.2s;
+  -webkit-appearance:none;
+}
+.big-input:focus{border-color:var(--gold);background:rgba(201,168,76,0.06);}
+.big-input::placeholder{color:var(--text2);}
+.big-input.error{border-color:var(--red);}
+.input-label{
+  font-size:13px;font-weight:700;color:var(--text2);
+  margin-bottom:8px;display:block;
+  text-transform:uppercase;letter-spacing:0.05em;
+}
+.field-error{font-size:12px;color:#f87171;margin-top:5px;display:none;}
+.field-error.show{display:block;}
+.input-group{margin-bottom:16px;}
+
+/* ── Source chips ── */
+.chip-row{display:flex;flex-wrap:wrap;gap:8px;}
+.chip{
+  padding:10px 16px;border-radius:20px;
+  border:2px solid rgba(255,255,255,0.1);
+  background:rgba(255,255,255,0.04);
+  color:var(--text2);cursor:pointer;
+  font-size:13px;font-weight:600;font-family:var(--font);
+  transition:all 0.15s;
+}
+.chip:hover{border-color:rgba(201,168,76,0.4);color:var(--text);}
+.chip.selected{border-color:var(--gold);background:rgba(201,168,76,0.12);color:var(--gold);}
+
+/* ── Navigation buttons ── */
+.nav-row{display:flex;gap:10px;margin-top:28px;}
+.btn-back{
+  padding:16px 20px;border-radius:14px;
+  border:2px solid rgba(255,255,255,0.1);
+  background:transparent;color:var(--text2);
+  font-family:var(--font);font-size:15px;font-weight:700;
+  cursor:pointer;transition:all 0.18s;flex-shrink:0;
+}
+.btn-back:hover{border-color:rgba(255,255,255,0.2);color:var(--text);}
+.btn-next{
+  flex:1;padding:16px;border-radius:14px;
+  border:none;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  color:#0a1628;font-family:var(--font);font-size:16px;font-weight:800;
+  cursor:pointer;
+  box-shadow:0 6px 24px rgba(201,168,76,0.3);
+  transition:all 0.2s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-next:hover{box-shadow:0 8px 32px rgba(201,168,76,0.45);transform:translateY(-1px);}
+.btn-next:active{transform:translateY(0);}
+.btn-next:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+
+/* ── Summary card ── */
+.summary-card{
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:16px;padding:20px;margin-bottom:16px;
+}
+.summary-row{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);
+  gap:12px;
+}
+.summary-row:last-child{border-bottom:none;}
+.summary-key{font-size:12px;color:var(--text2);flex-shrink:0;}
+.summary-val{font-size:13px;font-weight:700;color:var(--text);text-align:right;}
+
+/* ── Success ── */
+#success-screen{
+  display:none;
+  max-width:500px;margin:0 auto;
+  padding:40px 20px 60px;
+  text-align:center;
+  animation:slideIn 0.5s ease both;
+}
+.success-circle{
+  width:90px;height:90px;border-radius:50%;
+  background:rgba(14,159,110,0.15);
+  border:3px solid var(--green);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 24px;
+  font-size:40px;
+  animation:pop 0.5s ease both;
+}
+@keyframes pop{from{transform:scale(0.5);opacity:0}to{transform:scale(1);opacity:1}}
+.success-title{font-size:28px;font-weight:800;color:var(--text);margin-bottom:10px;}
+.success-sub{font-size:15px;color:var(--text2);line-height:1.7;margin-bottom:28px;}
+.success-box{
+  background:rgba(14,159,110,0.08);
+  border:1px solid rgba(14,159,110,0.2);
+  border-radius:16px;padding:20px;
+  font-size:14px;color:var(--text2);
+  line-height:2;text-align:left;
+  margin-bottom:24px;
+}
+.call-btn{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  width:100%;padding:18px;border-radius:14px;
+  background:linear-gradient(135deg,#0e9f6e,#065f46);
+  color:white;font-family:var(--font);font-size:17px;font-weight:800;
+  text-decoration:none;border:none;cursor:pointer;
+  box-shadow:0 6px 24px rgba(14,159,110,0.3);
+  transition:all 0.2s;
+}
+.call-btn:hover{box-shadow:0 8px 32px rgba(14,159,110,0.45);}
+
+/* ── Floating WhatsApp ── */
+.wa-float{
+  position:fixed;bottom:24px;right:20px;z-index:200;
+  width:56px;height:56px;border-radius:50%;
+  background:#25d366;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 20px rgba(37,211,102,0.4);
+  cursor:pointer;text-decoration:none;
+  font-size:28px;
+  animation:bounce 2s ease-in-out infinite;
+}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="topbar-name">Dr. Sanjay Kapoor</div>
+  <div class="topbar-sub">Senior Orthopaedic Surgeon · KK Hospital, Gurugram</div>
+</div>
+
+<!-- Progress -->
+<div class="progress-wrap" id="progress-wrap">
+  <div class="progress-label">
+    <span id="progress-text">Step 1 of 4</span>
+    <span id="progress-pct">25%</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+  <div class="step-dots">
+    <div class="step-dot active" id="dot-1"></div>
+    <div class="step-dot" id="dot-2"></div>
+    <div class="step-dot" id="dot-3"></div>
+    <div class="step-dot" id="dot-4"></div>
+  </div>
+</div>
+
+<!-- Steps -->
+<div class="steps-wrap">
+
+  <!-- Step 1: Problem -->
+  <div class="step active" id="step-1">
+    <div class="step-header">
+      <div class="step-num">Step 1 of 4</div>
+      <div class="step-title">What's bothering <span>you?</span></div>
+      <div class="step-sub">Tap the area that hurts</div>
+    </div>
+    <div class="option-grid">
+      <div class="option-card" onclick="selectOption('problem','Knee Pain / Knee Replacement',this)">
+        <div class="option-icon">🦵</div>
+        <div class="option-label">Knee Pain</div>
+        <div class="option-sub">Replacement / Arthritis</div>
+      </div>
+      <div class="option-card" onclick="selectOption('problem','Hip Pain / Hip Replacement',this)">
+        <div class="option-icon">🦴</div>
+        <div class="option-label">Hip Pain</div>
+        <div class="option-sub">Replacement / AVN</div>
+      </div>
+      <div class="option-card" onclick="selectOption('problem','ACL / Ligament Injury',this)">
+        <div class="option-icon">🏃</div>
+        <div class="option-label">Sports Injury</div>
+        <div class="option-sub">ACL / Ligament</div>
+      </div>
+      <div class="option-card" onclick="selectOption('problem','Spine / Back Pain',this)">
+        <div class="option-icon">🔩</div>
+        <div class="option-label">Back / Spine</div>
+        <div class="option-sub">Disc / Spondylitis</div>
+      </div>
+      <div class="option-card" onclick="selectOption('problem','Shoulder Pain / Injury',this)">
+        <div class="option-icon">💪</div>
+        <div class="option-label">Shoulder</div>
+        <div class="option-sub">Pain / Frozen</div>
+      </div>
+      <div class="option-card" onclick="selectOption('problem','Fracture / Bone Injury',this)">
+        <div class="option-icon">🩻</div>
+        <div class="option-label">Fracture</div>
+        <div class="option-sub">Bone Injury</div>
+      </div>
+      <div class="option-card" onclick="selectOption('problem','Arthritis',this)">
+        <div class="option-icon">🦶</div>
+        <div class="option-label">Arthritis</div>
+        <div class="option-sub">Joint swelling</div>
+      </div>
+      <div class="option-card" onclick="selectOption('problem','Other Joint Problem',this)">
+        <div class="option-icon">❓</div>
+        <div class="option-label">Other</div>
+        <div class="option-sub">Something else</div>
+      </div>
+    </div>
+    <div class="field-error" id="e-problem">Please select your problem</div>
+    <div class="nav-row">
+      <button class="btn-next" onclick="nextStep(1)">Next →</button>
+    </div>
+  </div>
+
+  <!-- Step 2: Pain level + duration -->
+  <div class="step" id="step-2">
+    <div class="step-header">
+      <div class="step-num">Step 2 of 4</div>
+      <div class="step-title">How bad is the <span>pain?</span></div>
+      <div class="step-sub">Tap a number from 1 (mild) to 10 (severe)</div>
+    </div>
+    <div class="pain-row" id="pain-scale">
+      <button class="pain-btn p1" onclick="setPain(1)">1</button>
+      <button class="pain-btn p2" onclick="setPain(2)">2</button>
+      <button class="pain-btn p3" onclick="setPain(3)">3</button>
+      <button class="pain-btn p4" onclick="setPain(4)">4</button>
+      <button class="pain-btn p5" onclick="setPain(5)">5</button>
+      <button class="pain-btn p6" onclick="setPain(6)">6</button>
+      <button class="pain-btn p7" onclick="setPain(7)">7</button>
+      <button class="pain-btn p8" onclick="setPain(8)">8</button>
+      <button class="pain-btn p9" onclick="setPain(9)">9</button>
+      <button class="pain-btn p10" onclick="setPain(10)">10</button>
+    </div>
+    <div class="pain-label"><span>😊 Mild</span><span>😐 Moderate</span><span>😣 Severe</span></div>
+
+    <div style="margin-top:24px;">
+      <label class="input-label">How long have you had this problem?</label>
+      <div class="option-grid">
+        <div class="option-card" onclick="selectOption('duration','Less than 1 month',this)">
+          <div class="option-label">Less than 1 month</div>
+        </div>
+        <div class="option-card" onclick="selectOption('duration','1–6 months',this)">
+          <div class="option-label">1–6 months</div>
+        </div>
+        <div class="option-card" onclick="selectOption('duration','6–12 months',this)">
+          <div class="option-label">6–12 months</div>
+        </div>
+        <div class="option-card" onclick="selectOption('duration','More than 1 year',this)">
+          <div class="option-label">More than 1 year</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn-back" onclick="prevStep(2)">← Back</button>
+      <button class="btn-next" onclick="nextStep(2)">Next →</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Contact details -->
+  <div class="step" id="step-3">
+    <div class="step-header">
+      <div class="step-num">Step 3 of 4</div>
+      <div class="step-title">Your <span>contact</span> details</div>
+      <div class="step-sub">We'll call you to confirm your appointment</div>
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">Your Name *</label>
+      <input class="big-input" id="i-name" placeholder="Enter your full name" autocomplete="name">
+      <div class="field-error" id="e-name">Please enter your name</div>
+    </div>
+    <div class="input-group">
+      <label class="input-label">Mobile Number *</label>
+      <input class="big-input" id="i-phone" placeholder="10-digit mobile number" type="tel" autocomplete="tel" maxlength="15">
+      <div class="field-error" id="e-phone">Please enter a valid 10-digit number</div>
+    </div>
+    <div class="option-grid three" style="margin-bottom:16px;">
+      <div class="option-card" onclick="selectOption('gender','Male',this)">
+        <div class="option-icon">👨</div>
+        <div class="option-label">Male</div>
+      </div>
+      <div class="option-card" onclick="selectOption('gender','Female',this)">
+        <div class="option-icon">👩</div>
+        <div class="option-label">Female</div>
+      </div>
+      <div class="option-card" onclick="selectOption('gender','Other',this)">
+        <div class="option-icon">🧑</div>
+        <div class="option-label">Other</div>
+      </div>
+    </div>
+    <div class="input-group">
+      <label class="input-label">Age</label>
+      <input class="big-input" id="i-age" placeholder="Your age" type="number" min="1" max="120">
+    </div>
+
+    <div class="nav-row">
+      <button class="btn-back" onclick="prevStep(3)">← Back</button>
+      <button class="btn-next" onclick="nextStep(3)">Next →</button>
+    </div>
+  </div>
+
+  <!-- Step 4: Confirm -->
+  <div class="step" id="step-4">
+    <div class="step-header">
+      <div class="step-num">Step 4 of 4</div>
+      <div class="step-title">Almost <span>done!</span></div>
+      <div class="step-sub">Review your details and confirm</div>
+    </div>
+
+    <div class="summary-card" id="summary-card"></div>
+
+    <label class="input-label">When do you prefer to visit?</label>
+    <div class="option-grid" style="margin-bottom:16px;">
+      <div class="option-card" onclick="selectOption('timing','Morning (9am–12pm)',this)">
+        <div class="option-icon">🌅</div>
+        <div class="option-label">Morning</div>
+        <div class="option-sub">9am – 12pm</div>
+      </div>
+      <div class="option-card" onclick="selectOption('timing','Afternoon (12pm–3pm)',this)">
+        <div class="option-icon">☀️</div>
+        <div class="option-label">Afternoon</div>
+        <div class="option-sub">12pm – 3pm</div>
+      </div>
+      <div class="option-card" onclick="selectOption('timing','Evening (3pm–6pm)',this)">
+        <div class="option-icon">🌆</div>
+        <div class="option-label">Evening</div>
+        <div class="option-sub">3pm – 6pm</div>
+      </div>
+      <div class="option-card" onclick="selectOption('timing','Urgent – ASAP',this)">
+        <div class="option-icon">🚨</div>
+        <div class="option-label">Urgent</div>
+        <div class="option-sub">Need appointment ASAP</div>
+      </div>
+    </div>
+
+    <label class="input-label">How did you find us?</label>
+    <div class="chip-row" style="margin-bottom:24px;">
+      <button class="chip selected" onclick="selectChip('source','Instagram',this)">📸 Instagram</button>
+      <button class="chip" onclick="selectChip('source','Facebook',this)">👍 Facebook</button>
+      <button class="chip" onclick="selectChip('source','Referral',this)">🤝 Referral</button>
+      <button class="chip" onclick="selectChip('source','Online',this)">🌐 Google</button>
+      <button class="chip" onclick="selectChip('source','Camp',this)">🏕️ Camp</button>
+      <button class="chip" onclick="selectChip('source','Other',this)">➕ Other</button>
+    </div>
+
+    <div style="background:rgba(201,168,76,0.07);border:1px solid rgba(201,168,76,0.2);border-radius:12px;padding:14px;font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.7;">
+      🔒 Your details are private and will only be used to contact you for your appointment at KK Hospital / Manipal Hospital.
+    </div>
+
+    <div class="nav-row">
+      <button class="btn-back" onclick="prevStep(4)">← Back</button>
+      <button class="btn-next" id="submit-btn" onclick="submitForm()">
+        ✅ Confirm Booking
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Success screen -->
+<div id="success-screen">
+  <div class="success-circle">✓</div>
+  <div class="success-title">You're all set! 🎉</div>
+  <div class="success-sub">
+    Our team will call you on <strong id="s-phone" style="color:var(--gold);"></strong> within <strong style="color:var(--gold);">2 hours</strong> to confirm your appointment.
+  </div>
+  <div class="success-box">
+    📞 We'll call you to confirm date &amp; time<br>
+    🏥 Visit KK Hospital, Gurugram or Manipal Hospital<br>
+    👨‍⚕️ Meet Dr. Sanjay Kapoor personally<br>
+    💊 Bring any previous reports / X-rays
+  </div>
+  <a class="call-btn" href="tel:+918223006500">
+    📞 Call Now: +91 82230 06500
+  </a>
+  <div style="margin-top:20px;font-size:13px;color:var(--text2);">
+    Want to ask something first? Call or WhatsApp us directly.
+  </div>
+</div>
+
+<!-- WhatsApp floating button -->
+<a class="wa-float" href="https://wa.me/918223006500?text=Hello%2C%20I%20want%20to%20book%20a%20consultation%20with%20Dr.%20Sanjay%20Kapoor" target="_blank" title="WhatsApp us">💬</a>
+
+<script>
+const SUPABASE_URL='https://alqixbiqbtapgeyxihwu.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFscWl4YmlxYnRhcGdleXhpaHd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzMzAxMzIsImV4cCI6MjA5NDkwNjEzMn0.4NY9N0LDXBcvQht02AQr7xfnhPMo6gtz2zhd6E_9jXo';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:false,storageKey:'inq2'}});
+
+let data={problem:'',duration:'',gender:'',timing:'',source:'Instagram',pain:0};
+let currentStep=1;
+const totalSteps=4;
+
+function selectOption(key,val,el){
+  data[key]=val;
+  const parent=el.closest('.option-grid,.step');
+  parent.querySelectorAll('.option-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function selectChip(key,val,el){
+  data[key]=val;
+  el.closest('.chip-row').querySelectorAll('.chip').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function setPain(n){
+  data.pain=n;
+  document.querySelectorAll('.pain-btn').forEach((b,i)=>{
+    b.classList.toggle('selected',i<n);
+  });
+}
+
+function updateProgress(step){
+  const pct=Math.round(step/totalSteps*100);
+  document.getElementById('progress-fill').style.width=pct+'%';
+  document.getElementById('progress-text').textContent='Step '+step+' of '+totalSteps;
+  document.getElementById('progress-pct').textContent=pct+'%';
+  for(let i=1;i<=totalSteps;i++){
+    const dot=document.getElementById('dot-'+i);
+    dot.className='step-dot'+(i===step?' active':i<step?' done':'');
+  }
+}
+
+function nextStep(from){
+  // Validate
+  if(from===1){
+    if(!data.problem){document.getElementById('e-problem').classList.add('show');return;}
+    document.getElementById('e-problem').classList.remove('show');
+  }
+  if(from===3){
+    const name=document.getElementById('i-name').value.trim();
+    const phone=document.getElementById('i-phone').value.replace(/[^0-9]/g,'');
+    let ok=true;
+    if(!name){document.getElementById('e-name').classList.add('show');document.getElementById('i-name').classList.add('error');ok=false;}
+    else{document.getElementById('e-name').classList.remove('show');document.getElementById('i-name').classList.remove('error');}
+    if(phone.length<10){document.getElementById('e-phone').classList.add('show');document.getElementById('i-phone').classList.add('error');ok=false;}
+    else{document.getElementById('e-phone').classList.remove('show');document.getElementById('i-phone').classList.remove('error');}
+    if(!ok)return;
+  }
+  if(from===4-1){buildSummary();}
+  goToStep(from+1);
+}
+
+function prevStep(from){goToStep(from-1);}
+
+function goToStep(n){
+  document.getElementById('step-'+currentStep).classList.remove('active');
+  currentStep=n;
+  document.getElementById('step-'+n).classList.add('active');
+  updateProgress(n);
+  if(n===4)buildSummary();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function buildSummary(){
+  const name=document.getElementById('i-name').value.trim();
+  const phone=document.getElementById('i-phone').value.trim();
+  const age=document.getElementById('i-age').value;
+  const rows=[
+    ['Problem',data.problem],
+    ['Pain Level',data.pain?data.pain+'/10':'Not specified'],
+    ['Duration',data.duration||'Not specified'],
+    ['Name',name||'—'],
+    ['Phone',phone||'—'],
+    ['Age / Gender',(age||'—')+' / '+(data.gender||'—')],
+  ];
+  document.getElementById('summary-card').innerHTML=rows.map(r=>`
+    <div class="summary-row">
+      <div class="summary-key">${r[0]}</div>
+      <div class="summary-val">${r[1]}</div>
+    </div>
+  `).join('');
+}
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+
+async function submitForm(){
+  const name=document.getElementById('i-name').value.trim();
+  const phone=document.getElementById('i-phone').value.trim();
+  const age=parseInt(document.getElementById('i-age').value)||null;
+
+  const btn=document.getElementById('submit-btn');
+  btn.disabled=true;btn.textContent='Sending...';
+
+  const notes=[];
+  if(data.pain) notes.push('Pain level: '+data.pain+'/10');
+  if(data.duration) notes.push('Duration: '+data.duration);
+  if(data.timing) notes.push('Preferred time: '+data.timing);
+
+  const patient={
+    id:uid(),name,phone,age,
+    gender:data.gender||null,
+    diagnosis:data.problem,
+    lead:data.source||'Instagram',
+    status:'new',
+    notes:notes.join('\n'),
+    hospital:'KK Hospital, Gurugram',
+    updated_by:'Website Inquiry',
+    updated_at:new Date().toISOString(),
+    date:new Date().toISOString().split('T')[0],
+  };
+
+  try{
+    const{error}=await sb.from('patients').insert(patient);
+    if(error)throw error;
+    document.getElementById('progress-wrap').style.display='none';
+    document.querySelector('.steps-wrap').style.display='none';
+    document.getElementById('success-screen').style.display='block';
+    document.getElementById('s-phone').textContent=phone;
+    window.scrollTo({top:0,behavior:'smooth'});
+  }catch(e){
+    btn.disabled=false;btn.textContent='⚠ Error – Try again';
+    btn.style.background='#e02424';
+    setTimeout(()=>{btn.textContent='✅ Confirm Booking';btn.style.background='';btn.disabled=false;},3000);
+    console.error(e);
+  }
+}
+</script>
+</body>
+</html>
